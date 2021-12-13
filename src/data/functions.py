@@ -34,8 +34,9 @@ def read_zeek_header(path):
 
 
 
-def read_zeek(path):
+def read_zeek(path, **kwargs):
     header = read_zeek_header(path)
-    df = pd.read_csv(path, skiprows=8, names=header['fields'], sep=header['separator'], comment='#')
-    df['ts'] = pd.to_datetime(df.ts, units='s')
+    df = pd.read_csv(path, skiprows=8, names=header['fields'], sep=header['separator'], comment='#', **kwargs)
+    if 'ts' in df.keys():
+        df['ts'] = pd.to_datetime(df.ts, unit='s')
     return df
