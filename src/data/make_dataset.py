@@ -6,6 +6,7 @@ import pandas as pd
 from pathlib import Path
 from os import scandir, path
 from functions import read_zeek
+from joblib import Parallel, delayed
 
 #from dotenv import find_dotenv, load_dotenv
 
@@ -60,8 +61,9 @@ def main(dates):
                 dates.append(x.name)
             except ValueError:
                 pass
-    for date in dates:
-        _make_dataset(date)
+    Parallel(n_jobs=12, backend='multiprocessing')(delayed(_make_dataset)(date) for date in dates)
+    #for date in dates:
+    #    _make_dataset(date)
 
 
 
