@@ -1,6 +1,16 @@
-import gzip
 import datetime as dt
+import gzip
+import hashlib
 import pandas as pd
+
+from dotenv import dotenv_values
+from pathlib import Path
+from os import path
+
+_project_dir = Path(__file__).resolve().parents[2]
+_config = {
+    **dotenv_values(path.join(_project_dir, ".env")),  # load sensitive variables
+}
 
 class NotAZeekFile(Exception):
     pass
@@ -32,11 +42,12 @@ def read_zeek_header(path):
     header['types'] = line.rstrip().split()[1:]
     return header
 
-
-
 def read_zeek(path, **kwargs):
     header = read_zeek_header(path)
     df = pd.read_csv(path, skiprows=8, names=header['fields'], sep=header['separator'], comment='#', **kwargs)
     if 'ts' in df.keys():
         df['ts'] = pd.to_datetime(df.ts, unit='s')
     return df
+
+def scramble(s):
+    return hashlib.sha1(_config['salt'].encode() + s.encode()).hexdigest()
