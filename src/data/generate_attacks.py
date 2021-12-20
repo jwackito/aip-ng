@@ -31,16 +31,18 @@ def _make_dataset(date):
     df['orig'] = a[:,0]
     df['dest'] = a[:,1]
     df['dest'] = df['dest'].apply(scramble)
+    df['count'] = daily.groupby(['id.orig_h', 'id.resp_h']).count().ts.values
     df.reset_index(drop=True, inplace=True)
-    df.to_csv(path.join(project_dir,'data','processed', f'attacks_per_dest.{date}.csv'), columns=['orig', 'dest', 'duration', 'packets', 'bytes'], index=False)
+    df.to_csv(path.join(project_dir,'data','processed', f'attacks_per_dest.{date}.csv'), columns=['orig', 'dest', 'count', 'duration', 'packets', 'bytes'], index=False)
     logger.debug('Writting file: ' + path.join(project_dir,'data','processed', f'attacks_per_dest.{date}.csv'))
     
     # Calculate the total attacks for each origin
     df = daily[['id.orig_h', 'duration', 'orig_pkts', 'orig_ip_bytes']].groupby(['id.orig_h']).sum()
     df.rename(columns={'duration':'duration', 'orig_pkts':'packets', 'orig_ip_bytes':'bytes'}, inplace=True)
     df['orig'] = df.index.values
+    df['count'] = daily.groupby(['id.orig_h']).count().ts.values
     df.reset_index(drop=True, inplace=True)
-    df.to_csv(path.join(project_dir,'data','processed', f'attacks.{date}.csv'), columns=['orig', 'duration', 'packets', 'bytes'], index=False)
+    df.to_csv(path.join(project_dir,'data','processed', f'attacks.{date}.csv'), columns=['orig', 'count', 'duration', 'packets', 'bytes'], index=False)
     logger.debug('Writting file: ' + path.join(project_dir,'data','processed', f'attacks.{date}.csv'))
 
 @click.command()
