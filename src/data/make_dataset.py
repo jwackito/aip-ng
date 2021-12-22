@@ -5,7 +5,7 @@ import pandas as pd
 
 from pathlib import Path
 from os import scandir, path
-from functions import read_zeek
+from functions import read_zeek, getdata
 from joblib import Parallel, delayed
 
 #from dotenv import find_dotenv, load_dotenv
@@ -18,8 +18,13 @@ def _make_dataset(date):
     logger = logging.getLogger(__name__)
     honeypots = pd.read_csv(path.join(project_dir, 'data', 'external', 'honeypots_public_ips.csv'))
     ips = honeypots.public_ip.values
+    # if data directory does not exist, execute the magic to get it
+    if path.isdir(path.join(project_dir,'data','raw', date)) == False:
+        logging.debug(f'Getting data for {date}')
+        getdata(date)
+    # after this point, if directory does not exist, we can skip it.
     try:
-        zeek_files = (x for x in  scandir(path.join(project_dir,'data','raw', date)) if x.name.startswith('conn.'))
+        zeek_files = (x for x in scandir(path.join(project_dir,'data','raw', date)) if x.name.startswith('conn.'))
     except FileNotFoundError:
         logger.warning(f'Skipping {path.join(project_dir,"data","raw", date)}. Directory not exist.')
         return
@@ -36,12 +41,6 @@ def _make_dataset(date):
         daily = daily.append(hourly)
     daily.to_csv(path.join(project_dir,'data','interim', f'daily.conn.{date}.csv'), index=False)
     logger.debug('Writting file: ' + path.join(project_dir,'data','interim', f'daily.conn.{date}.csv'))
-
-
-
-
-
-
 
 @click.command()
 @click.argument('dates' , type=click.DateTime(formats=['%Y-%m-%d']), nargs=-1)
