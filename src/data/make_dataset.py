@@ -5,7 +5,7 @@ import pandas as pd
 
 from pathlib import Path
 from os import scandir, path
-from functions import read_zeek, getdata
+from functions import read_zeek, getrawdata, removerawdata
 from joblib import Parallel, delayed
 
 #from dotenv import find_dotenv, load_dotenv
@@ -21,7 +21,7 @@ def _make_dataset(date):
     # if data directory does not exist, execute the magic to get it
     if path.isdir(path.join(project_dir,'data','raw', date)) == False:
         logging.debug(f'Getting data for {date}')
-        getdata(date)
+        getrawdata(date)
     # after this point, if directory does not exist, we can skip it.
     try:
         zeek_files = (x for x in scandir(path.join(project_dir,'data','raw', date)) if x.name.startswith('conn.'))
@@ -41,6 +41,9 @@ def _make_dataset(date):
         daily = daily.append(hourly)
     daily.to_csv(path.join(project_dir,'data','interim', f'daily.conn.{date}.csv'), index=False)
     logger.debug('Writting file: ' + path.join(project_dir,'data','interim', f'daily.conn.{date}.csv'))
+    logger.debug('Removing raw data (not needed anymore): ' + path.join(project_dir,'data','raw', f'{date}'))
+    removerawdata(date)
+
 
 @click.command()
 @click.argument('dates' , type=click.DateTime(formats=['%Y-%m-%d']), nargs=-1)

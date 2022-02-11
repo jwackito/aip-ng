@@ -7,7 +7,6 @@ import numpy as np
 from pathlib import Path
 from os import scandir, path
 from joblib import Parallel, delayed
-from make_dataset import main
 from functions import scramble
 
 def _make_dataset(date):
