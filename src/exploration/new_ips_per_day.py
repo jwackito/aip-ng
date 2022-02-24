@@ -304,3 +304,45 @@ plt.xlabel('Date')
 plt.ylabel('Number of IPs in BL')
 plt.subplots_adjust(top=.95, left=.075, bottom=.2, right=.95)
 plt.savefig('images/number_of_ips_bl.png')
+
+
+
+# runs in 8 minutes
+stime = time.time()
+firstday = '2021-08-01'
+lastday = '2021-11-30'
+fulldays = pd.date_range(start=firstday, end=lastday)
+stats = []
+blday = []
+for i in range(30):
+    print(i,end='\r')
+    bl = pd.read_csv(f'../../data/processed/attacks.{str(fulldays[i].date())}.csv', usecols=['orig'])
+    blday.append(str(fulldays[i].date()))
+    ministats = []
+    for date1 in [str(x.date()) for x in fulldays[i:]]:
+        target = pd.read_csv(f'../../data/processed/attacks.{date1}.csv', usecols=['orig'])
+        ipsboth = len(target.merge(bl,on='orig'))
+        mcc = compute_MCC(target.orig.values, bl.orig.values)
+        ministats.append([date1, ipsboth, mcc])
+    stats.append(ministats)
+stats = np.array(stats)
+print(f'run in {(time.time() - stime)/60} minutes.')
+
+z = zeros_like(np.array(stats[0])[:,1].astype(float)) 
+for i in range(len(stats)): 
+    print(i) 
+    z += np.resize(np.array(stats[i])[:,2].astype(float), 122) 
+z /= len(stats)
+
+# plot 7 in the AIP data exploration report
+plt.rcParams['figure.figsize'] = [12,6]
+plt.plot(range(1,len(z)-len(stats)), z[1:-len(stats)], '-.', label='Average BL1 MCC')
+plt.legend()
+plt.grid()
+plt.title('Average MCC for a blocklist used several days after its creation')
+plt.xlabel('Days after the attacks used to create the BL')
+plt.ylabel('MCC')
+plt.subplots_adjust(top=.95, left=.075, bottom=.1, right=.95)
+plt.savefig('images/mcc_decay.png')
+
+
